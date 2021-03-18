@@ -10,7 +10,17 @@ The framework also safely queries multiple Thorchain nodes for the latest inboun
 `BigInt` package is pulled via https://github.com/attaswift/BigInt
 
 ### Installation
-Use Xcode package manager **Add Package Dependency** and use the Github URL. 
+#####  Swift Package
+Use Xcode package manager ****Add Package Dependency**** and use the Github URL.
+
+##### Cocoapods
+Edit `Podfile`
+```
+target 'MyApp' do
+    use_frameworks!
+    pod 'ThorchainFramework'
+end
+``` 
 
 ### Usage
 ```swift
