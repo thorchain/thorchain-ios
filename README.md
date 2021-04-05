@@ -2,7 +2,7 @@
 
 `ThorchainFramework` is a native Swift package that can be added to any project which requires client side Thorchain network requests and calculations. 
 
-The framework is designed to work with the Multichain Thorchain network to assist clients in creating  transactions with memo's for Swaps and Staking. Functions are also available to perform Swap/Stake/Slip/Fee calculations for display to users using the latest information from Thorchain node(s) Midgard service.
+The framework is designed to work with the Multichain Thorchain network to assist clients in creating  transactions with memo's for Swaps and Staking. Functions are also available to perform Swap/Stake/Slip/Fee calculations for display to users using the latest information from Thorchain node(s) Midgard service. The entire Midgard API is available as native Swift functions 
 
 The framework also safely queries multiple Thorchain nodes for the latest inbound vault addresses which are cached in memory for 15 minutes. For paranoid level security, you should run your own Thorchain node which can be given to the framework to query in addition to other known nodes.
 
@@ -70,7 +70,7 @@ var slip : Decimal = Thorchain.getSwapSlip(inputAmount: assetInput, pool: assetP
 // 0.00900901
 ```
 
-For Midgard Pool data, ThorchainFramework provides network requests:
+For Midgard data, ThorchainFramework provides network requests:
 ```swift
 let thorchain = Thorchain(withChain: .testnet)
 thorchain.getMidgardPools { (pools) in
@@ -90,6 +90,10 @@ thorchain.getMidgardPools { (pools) in
     }
 }
 ```
+
+### Safety
+**Memory Safety**: Thorchain framework will hold a strong reference to itself for the duration of network requests or until they timeout (10 seconds). If your local reference to Thorchain goes out of scope, the request will continue and call the completion handler then deallocate.
+**Thread Safety**: Thorchain framework functions are all non-blocking and should be called from the Main Thread. Your completion handlers will be called on the Main Thread.
 
 ### Decimals
 Thorchain (the network and this framework) uses 1e8 decimals internally for all assets. This means for a *1.0 ETH* transaction, you would interact with the ThorchainFramework with `AssetAmount(1.0)` or `BaseAmount(100_000_000)` (*not* 1e18). When the framework outputs an AssetAmount for you to perform in a live blockchain transaction, you should use the correct number of decimals the real chain requires (e.g. 1e18 for ETH) for your real world transaction.

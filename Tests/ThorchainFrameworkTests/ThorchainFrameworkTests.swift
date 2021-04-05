@@ -21,76 +21,7 @@ final class ThorchainFrameworkTests: XCTestCase {
         XCTAssert(URL(string: "https://chaosnet-seed.thorchain.info") != nil)
         XCTAssert(URL(string: "https://testnet.thornode.thorchain.info") != nil)
         XCTAssert(URL(string: "https://testnet.midgard.thorchain.info/v2/pools") != nil)
-    }
-    
-    
-    func testSwapNetworking() {
-        
-        // Create an expectation for a background download task.
-        let expectation = XCTestExpectation(description: "Midgard swap request")
-
-        // Thorchain object on testnet
-        let thorchain = Thorchain(withChain: .testnet)
-        thorchain.performSwap(fromAsset: .ETH,
-                              toAsset: .BTC,
-                              destinationAddress: "tthor1nr5fx23rvskt4uasdv49s2uhu0kyh73mdzy095",
-                              fromAssetAmount: 0.1) { (swapData) in
-            
-            XCTAssertNotNil(swapData, "No vault data was downloaded.")
-            
-            if let txParams = swapData?.0, let swapCalculations = swapData?.1 {
-                // Success
-                print(swapCalculations)
-                print(txParams)
-                
-                XCTAssert(swapCalculations.slip > 0)
-                
-                switch txParams {
-                case .regularSwap(let regularTxData):
-                    print(regularTxData)
-                    XCTAssert(regularTxData.memo.hasPrefix("SWAP:"))
-                case .routedSwap(let routedTxData):
-                    print(routedTxData)
-                    XCTAssert(routedTxData.routerContractAddress.lowercased() == "0x9d496de78837f5a2ba64cb40e62c19fbcb67f55a")
-                    XCTAssert(routedTxData.assetAddress == "0x0000000000000000000000000000000000000000")
-                    XCTAssert(routedTxData.memo.hasPrefix("SWAP:"))
-                }
-            }
-            
-            expectation.fulfill()
-        }
-        
-        // Wait until the expectation is fulfilled, with a timeout of 12 seconds.
-        wait(for: [expectation], timeout: 12.0)
-    }
-    
-    func testMidgardPoolRequestNetworking() {
-        
-        // Create an expectation for a background download task.
-        let expectation = XCTestExpectation(description: "Midgard pool request")
-
-        // Thorchain object on testnet
-        let thorchain = Thorchain(withChain: .testnet)
-        thorchain.getMidgardPools { (pools) in
-            XCTAssertNotNil(pools)
-            if let pools = pools {
-                // Success
-                for pool : MidgardPool in pools {
-                    print(pool.asset)
-                    print(pool.assetDepth)
-                    print(pool.runeDepth)
-                    print(pool.assetPrice)
-                    print(pool.assetPriceUSD)
-                    print(pool.poolAPY)
-                    print(pool.volume24h)
-                    print(pool.status)
-                    print(pool.units)
-                }
-            }
-            expectation.fulfill()
-        }
-        // Wait until the expectation is fulfilled, with a timeout of 12 seconds.
-        wait(for: [expectation], timeout: 12.0)
+        XCTAssert(URL(string: "https://midgard.thorchain.info") != nil)
     }
     
     func testAssets() {

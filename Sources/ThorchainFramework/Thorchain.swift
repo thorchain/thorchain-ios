@@ -23,22 +23,13 @@ public class Thorchain {
             }
         }
         
-        /// List of known working Midgard hostnames that are valid https endpoints that are added to every configuration request (along with 3 random others) for stronger verification. Includes port (where applicable).
-        var additionalNodes : [URL] {
+        /// Midgard hostnames. Used for all Midgard requests except inbound_addresses which uses various random nodes, plus this.
+        var midgardURL : URL {
             switch self {
             case .mainnet:
-                return []  // TODO: Endpoint for live - will probably be https://thornode.thorchain.info
+                return URL(string: "https://midgard.thorchain.info")!
             case .testnet:
-                return [URL(string: "https://testnet.midgard.thorchain.info")!]
-            }
-        }
-        
-        var midgardPoolURL : URL {
-            switch self {
-            case .mainnet:
-                return URL(string: "https://midgard.thorchain.info/v2/pools")!
-            case .testnet:
-                return URL(string: "https://testnet.midgard.thorchain.info/v2/pools")!
+                return URL(string: "https://testnet.midgard.thorchain.info")!
             }
         }
     }
@@ -60,11 +51,11 @@ public class Thorchain {
     private(set) public var chain = Chain.mainnet
     
     /// Non-public storage of inbound addresses. User should query latestInboundAddresses instead.
-    var latestAddressesStored : (inboundAddresses: [InboundAddress], fetchedTime: Date)? = nil
+    var latestAddressesStored : (inboundAddresses: [Midgard.InboundAddress], fetchedTime: Date)? = nil
     
     /// Latest list of inbound addresses from `/v2/thorchain/inbound_addresses`
     /// If it has been greater than 15 minutes since fetching, this returns nil (you should fetch again)
-    public var latestInboundAddresses : [InboundAddress]? {
+    public var latestInboundAddresses : [Midgard.InboundAddress]? {
         if let date = latestAddressesStored?.fetchedTime, date.timeIntervalSinceNow >= -15*60,
            let vaults = latestAddressesStored?.inboundAddresses {
             return vaults
@@ -73,7 +64,7 @@ public class Thorchain {
     }
     
     /// Latest list of pools fetched from `/v2/pools`
-    public var latestMidgardPools : [MidgardPool]?
+    public var latestMidgardPools : [Midgard.Pool]?
     
     /// Shared ephemeral session to use for all network requests. Delegate callbacks on Main Thread. Zero caching.
     let urlSession : URLSession
@@ -128,7 +119,7 @@ public class Thorchain {
             assert(Thread.current.isMainThread)
             
             // Unwrap result & filter out any chains with status showing 'halted : true'.
-            guard let inboundAddresses = inboundAddresses?.filter({ $0.halted == false }), inboundAddresses.count > 0 else {
+            guard let inboundAddresses = inboundAddresses, inboundAddresses.count > 0 else {
                 self.debugLog("Thorchain: No inbound addresses found. Probably network error.")
                 completionHandler(nil)
                 return // Error: No vault. Probably a network error.
@@ -142,7 +133,7 @@ public class Thorchain {
             // Get the best Asgard Vault asset address at the last possible time before doing the transaction. An address is good for 15 minutes, but do not cache at all.
             // If a recipient address is cached and funds sent to an old (retired) asgard vault, the funds are lost.
             // If funds are sent to an active vault but your transaction fees are too low and it takes several hours or more, your funds may be lost.
-            guard let inboundAddress : InboundAddress = inboundAddresses.first(where: { $0.chain.uppercased() == fromAsset.chain.uppercased() }) else {
+            guard let inboundAddress : Midgard.InboundAddress = inboundAddresses.first(where: { $0.chain.uppercased() == fromAsset.chain.uppercased() }) else {
                 self.debugLog("Thorchain: Could not find chain \(fromAsset.chain) in v2/thorchain/inbound_addresses API response")
                 completionHandler(nil)
                 return
@@ -169,7 +160,7 @@ public class Thorchain {
                     let nonRuneAsset : Asset = toRune ? fromAsset : toAsset
                     
                     // Extract the relevant balance from pools
-                    guard let pool : MidgardPool = pools.first(where: { $0.asset.uppercased() == nonRuneAsset.memoString.uppercased() }) else {
+                    guard let pool : Midgard.Pool = pools.first(where: { $0.asset.uppercased() == nonRuneAsset.memoString.uppercased() }) else {
                         self.debugLog("Thorchain: Could not find Midgard pool for \(nonRuneAsset.memoString). Aborting.")
                         completionHandler(nil)
                         return
@@ -209,8 +200,9 @@ public class Thorchain {
                     self.debugLog("Fee: \(fee.assetAmount.amount.truncate(4)) RUNE\n")
                     
                     // Check for Router. If one specified, we MUST use this (via .deposit() function) in lieu of the ChainAddress specified.
-                    // e.g. https://ropsten.etherscan.io/address/0x9d496De78837f5a2bA64Cb40E62c19FBcB67f55a#code
-                    if inboundAddress.router != "" {
+                    // e.g. https://ropsten.etherscan.io/address/0x9d496De78837f5a2bA64Cb40E62c19FBcB67f55a#code -- Testnet
+                    // https://etherscan.io/address/0xc284c7dd4dc9a981f4c0cd2c10da5e91217c3126#code -- Mainnet
+                    if let router = inboundAddress.router, router != "" {
                         if fromAsset.chain != "ETH" {
                             // Support for routers other than ETH require correct split (Address) logic above, and testing.
                             self.debugLog("Thorchain: Only ETH Routers supported (tested). Aborting.")
@@ -227,14 +219,13 @@ public class Thorchain {
                                 (fromAsset.chain == "ETH" && fromAsset.symbol != "ETH" && assetAddress.count == 42 && assetAddress.hasPrefix("0x")))  // or a valid ERC20 address
                         
                         // Package up into struct with all info required to call the deposit() function
-                        let transactionDetails = TxParams.RoutedTransaction(router: inboundAddress.router,
+                        let transactionDetails = TxParams.RoutedTransaction(router: router,
                                                                             payableVaultAddress: inboundAddress.address,
                                                                             assetAddress: String(assetAddress),
                                                                             amount: fromAssetAmount,
                                                                             memo: swapMemo)
-                        
-                        self.debugLog("Router: \(transactionDetails.routerContractAddress)\n")
-                        self.debugLog("\n\(inboundAddress.router).deposit(\n\tvault: \(transactionDetails.payableVaultAddress ?? "Address expired"),\n\tasset: \(assetAddress), \n\tamount: \(transactionDetails.amount.amount.description) \(fromAsset.ticker),\n\tmemo: \(transactionDetails.memo) \n)\n")
+                        self.debugLog("Router: \(router)\n")
+                        self.debugLog("\n\(router).deposit(\n\tvault: \(transactionDetails.payableVaultAddress ?? "Address expired"),\n\tasset: \(assetAddress), \n\tamount: \(transactionDetails.amount.amount.description) \(fromAsset.ticker),\n\tmemo: \(transactionDetails.memo) \n)\n")
                         
                         let txParams : TxParams = .routedSwap(transactionDetails)
                         completionHandler((txParams, swapCalculations))  // Success
@@ -254,12 +245,12 @@ public class Thorchain {
                     // Double Swap [fromAsset] >> [toAsset]
                     
                     // Extract the relevant balance from pools
-                    guard let fromPool : MidgardPool = pools.first(where: { $0.asset.uppercased() == fromAsset.memoString.uppercased() }) else {
+                    guard let fromPool : Midgard.Pool = pools.first(where: { $0.asset.uppercased() == fromAsset.memoString.uppercased() }) else {
                         self.debugLog("Thorchain: Could not find Midgard pool for \(fromAsset.memoString). Aborting.")
                         completionHandler(nil)
                         return
                     }
-                    guard let toPool : MidgardPool = pools.first(where: { $0.asset.uppercased() == toAsset.memoString.uppercased() }) else {
+                    guard let toPool : Midgard.Pool = pools.first(where: { $0.asset.uppercased() == toAsset.memoString.uppercased() }) else {
                         self.debugLog("Thorchain: Could not find Midgard pool for \(toAsset.memoString). Aborting.")
                         completionHandler(nil)
                         return
@@ -301,7 +292,7 @@ public class Thorchain {
                     self.debugLog("Fee: \(fee.assetAmount.amount.truncate(4)) RUNE\n")
                     
                     // Check for Router.
-                    if inboundAddress.router != "" {
+                    if let router = inboundAddress.router, router != "" {
                         if fromAsset.chain != "ETH" {
                             // Support for routers other than ETH require correct split (Address) logic above, and testing.
                             self.debugLog("Thorchain: Only ETH Routers supported (tested). Aborting.")
@@ -318,14 +309,14 @@ public class Thorchain {
                                 (fromAsset.chain == "ETH" && fromAsset.symbol != "ETH" && assetAddress.count == 42 && assetAddress.hasPrefix("0x")))  // or a valid ERC20 address
                         
                         // Package up into struct with all info required to call the deposit() function
-                        let transactionDetails = TxParams.RoutedTransaction(router: inboundAddress.router,
+                        let transactionDetails = TxParams.RoutedTransaction(router: router,
                                                                             payableVaultAddress: inboundAddress.address,
                                                                             assetAddress: String(assetAddress),
                                                                             amount: fromAssetAmount,
                                                                             memo: swapMemo)
                         
-                        self.debugLog("Router: \(transactionDetails.routerContractAddress)\n")
-                        self.debugLog("\n\(inboundAddress.router).deposit(\n\tvault: \(transactionDetails.payableVaultAddress ?? "Address expired"),\n\tasset: \(assetAddress), \n\tamount: \(transactionDetails.amount.amount.description) \(fromAsset.ticker),\n\tmemo: \(transactionDetails.memo) \n)\n")
+                        self.debugLog("Router: \(router)\n")
+                        self.debugLog("\n\(router).deposit(\n\tvault: \(transactionDetails.payableVaultAddress ?? "Address expired"),\n\tasset: \(assetAddress), \n\tamount: \(transactionDetails.amount.amount.description) \(fromAsset.ticker),\n\tmemo: \(transactionDetails.memo) \n)\n")
                         
                         let txParams : TxParams = .routedSwap(transactionDetails)
                         completionHandler((txParams, swapCalculations))  // Success
