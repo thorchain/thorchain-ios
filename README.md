@@ -1,5 +1,6 @@
 # ThorchainFramework
 
+![Build](https://img.shields.io/github/workflow/status/thorchain/thorchain-ios/Swift)
 ![Version](https://img.shields.io/cocoapods/v/ThorchainFramework)
 ![Platforms](https://img.shields.io/cocoapods/p/ThorchainFramework)
 ![License](https://img.shields.io/cocoapods/l/ThorchainFramework)
