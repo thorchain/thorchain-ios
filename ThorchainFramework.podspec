@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
     spec.name         = 'ThorchainFramework'
-    spec.version      = '0.0.2'
+    spec.version      = '0.0.4'
     spec.swift_version = '5.3'
     spec.ios.deployment_target = "9.0"
     spec.osx.deployment_target = "10.14"

@@ -46,7 +46,7 @@ extension Midgard {
         /// If set, contains ETH router contract address which should be used with the .deposit() function.
         public let router : String?
         
-        //TODO - Document
+        /// Estimate of gas rates to use for client transactions
         public let gas_rate : String
     }
 }

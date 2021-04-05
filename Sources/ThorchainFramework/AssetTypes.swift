@@ -56,7 +56,7 @@ public struct BaseAmount : ExpressibleByIntegerLiteral, ExpressibleByStringLiter
     public let amount : BigInt
     public let decimals: Int
     
-    /// Computed property to convert base amount (e.g. 150,000,000 tor) to AssetAmount (e.g. 1.0 RUNE)
+    /// Computed property to convert base amount (e.g. 150,000,000 tor) to AssetAmount (e.g. 1.5 RUNE)
     public var assetAmount : AssetAmount {
         let zeros = BigInt(10).power(decimals)
         let (quotient,remainder) = amount.quotientAndRemainder(dividingBy: zeros)

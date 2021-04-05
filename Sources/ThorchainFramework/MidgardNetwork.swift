@@ -7,6 +7,7 @@ extension Thorchain {
     ///   - completionHandler: Called on main thread. Will contain an array of MidgardAPIResponseObject's, or nil for any errors.
     ///   - midgardAPIURL: (optional) a URL for Midgard. If none specified, uses thorchain.info
     ///   - endpoint: Midgard API Endpoint, e.g. `/v2/pools`.
+    ///   - queryItems: Array of query items to append. If unspecified, defaults to empty array.
     func getMidgardResponse<MidgardType>(_ completionHandler: @escaping (MidgardType?) -> (), midgardAPIURL: URL? = nil, endpoint: String, queryItems: [URLQueryItem] = []) where MidgardType: MidgardAPIResponse {
         let midgardURL : URL
         if let midgardAPIURL = midgardAPIURL {
@@ -67,11 +68,7 @@ extension Thorchain {
     public func getMidgardPools(filterByStatus status : Midgard.PoolStatus? = nil,
                                 _ completionHandler: @escaping ([Midgard.Pool]?) -> (),
                                 midgardAPIURL: URL? = nil) {
-        var queryItems = [URLQueryItem]()
-        if let status = status {
-            let query = URLQueryItem(name: "status", value: status.rawValue)
-            queryItems.append(query)
-        }
+        let queryItems = status != nil ? [URLQueryItem(name: "status", value: status!.rawValue)] : []
         getMidgardResponse(completionHandler, midgardAPIURL: midgardAPIURL, endpoint: "/v2/pools", queryItems: queryItems)
     }
     
