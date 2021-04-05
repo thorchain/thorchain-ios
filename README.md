@@ -1,5 +1,9 @@
 # ThorchainFramework
 
+![Version](https://img.shields.io/cocoapods/v/ThorchainFramework)
+![Platforms](https://img.shields.io/cocoapods/p/ThorchainFramework)
+![License](https://img.shields.io/cocoapods/l/ThorchainFramework)
+
 `ThorchainFramework` is a native Swift package that can be added to any project which requires client side Thorchain network requests and calculations. 
 
 The framework is designed to work with the Multichain Thorchain network to assist clients in creating  transactions with memo's for Swaps and Staking. Functions are also available to perform Swap/Stake/Slip/Fee calculations for display to users using the latest information from Thorchain node(s) Midgard service. The entire Midgard API is available as native Swift functions 
