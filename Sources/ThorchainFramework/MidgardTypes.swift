@@ -42,11 +42,13 @@ extension Midgard {
         /// Inbound Vault address. Only valid for a short period of time (~15 mins) due to vault churn. Do not cache.
         public let address : String
         
-        /// Normally empty string `""`.
         /// If set, contains ETH router contract address which should be used with the .deposit() function.
         public let router : String?
         
-        /// Estimate of gas rates to use for client transactions
+        /// If set and true, indicates we should NOT use this chain.
+        public let halted : Bool?
+        
+        /// Estimate of gas rates to use for client transactions. Sats per byte or Gwei depending on chain.
         public let gas_rate : String
     }
 }
