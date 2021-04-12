@@ -23,7 +23,7 @@ extension Array : MidgardAPIResponse where Element : MidgardAPIResponseAsArray {
 //    "chain": "ETH",
 //    "pub_key": "tthorpub1addwnpepqvvxqcz2azdxvrudd93yp6xutf3j76yvw3zup4xpf34vn3knl8nmcy9v8a9",
 //    "address": "0xf5c9ba94e1eff689f1ffa318d0229fb25351d66d",
-//    "router": "0x9d496De78837f5a2bA64Cb40E62c19FBcB67f55a",
+//    "router": "0xe0a63488e677151844e70623533c22007dc57c9e",
 //    "halted": false
 //}
 

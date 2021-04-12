@@ -34,10 +34,10 @@ final class ThorchainNetworkTests: XCTestCase {
                 case .routedSwap(let routedTxData):
                     print(routedTxData)
                     if self.thorchain.chain == .testnet {
-                        XCTAssert(routedTxData.routerContractAddress.lowercased() == "0x9d496de78837f5a2ba64cb40e62c19fbcb67f55a")
+                        XCTAssert(routedTxData.routerContractAddress.lowercased() == "0xe0a63488e677151844e70623533c22007dc57c9e")
                     }
                     if self.thorchain.chain == .mainnet {
-                        XCTAssert(routedTxData.routerContractAddress.lowercased() == "0xc284c7dd4dc9a981f4c0cd2c10da5e91217c3126")
+                        XCTAssert(routedTxData.routerContractAddress.lowercased() == "0x42a5ed456650a09dc10ebc6361a7480fdd61f27b")
                     }
                     XCTAssert(routedTxData.assetAddress == "0x0000000000000000000000000000000000000000")
                     XCTAssert(routedTxData.memo.hasPrefix("SWAP:"))

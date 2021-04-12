@@ -200,8 +200,8 @@ public class Thorchain {
                     self.debugLog("Fee: \(fee.assetAmount.amount.truncate(4)) RUNE\n")
                     
                     // Check for Router. If one specified, we MUST use this (via .deposit() function) in lieu of the ChainAddress specified.
-                    // e.g. https://ropsten.etherscan.io/address/0x9d496De78837f5a2bA64Cb40E62c19FBcB67f55a#code -- Testnet
-                    // https://etherscan.io/address/0xc284c7dd4dc9a981f4c0cd2c10da5e91217c3126#code -- Mainnet
+                    // e.g. https://ropsten.etherscan.io/address/0xe0a63488e677151844e70623533c22007dc57c9e#code -- Testnet
+                    // https://etherscan.io/address/0x42a5ed456650a09dc10ebc6361a7480fdd61f27b#code -- Mainnet
                     if let router = inboundAddress.router, router != "" {
                         if fromAsset.chain != "ETH" {
                             // Support for routers other than ETH require correct split (Address) logic above, and testing.
@@ -388,7 +388,7 @@ extension Thorchain {
         
         
         /// Transaction type that uses a Smart Contract deposit(address payable vault, address asset, uint amount, string memory memo)
-        /// For example ETH Router: https://ropsten.etherscan.io/address/0x9d496De78837f5a2bA64Cb40E62c19FBcB67f55a#code
+        /// For example ETH Router: https://ropsten.etherscan.io/address/0xe0a63488e677151844e70623533c22007dc57c9e#code
         public struct RoutedTransaction {
             
             /// Transaction details to send to Router smart contracts .deposit() function.
