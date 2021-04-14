@@ -101,11 +101,13 @@ public class Thorchain {
     ///   - toAsset: (optional) Asset you are converting TO. If nil or unspecified, this is a "single swap" which converts to RUNE. To perform a "double swap" (fromAsset > RUNE, RUNE > toAsset) specify here. e.g. .ETH
     ///   - destinationAddress: Destination address. This is where the Thorchain nodes will send your output funds. Ensure this is correct and in the format for your toAsset.
     ///   - fromAssetAmount: Amount of your fromAsset you wish to swap. Specified in BaseAmount which is the large unit (e.g. 100000000 for 1.0 BTC). Alternatively use AssetAmount(x, decimal: 8).baseAmount for x units, e.g. 1.0 BTC.
+    ///   - limitProtection: Specify true to add limit to end of transaction memo's. Default true.
     ///   - completionHandler: Completion handler is called on main thread with an optional TxParams value specifying details of the transaction. You should *not* cache this object for more than 15 minutes. Typically this object is returned to display calculations to the user, who then manually authorises the swap very soon after (if more than 15 minutes, get a fresh TxParams). Use the address and memo in the TxParams to send funds to the appropriate vault or router. For additional validation, you can check that the TxParams address has a large amount of funds in it, indicating it is a valid active vault.
     public func performSwap(fromAsset: Asset,
                             toAsset: Asset = .RuneNative,  //THOR.RUNE
                             destinationAddress: String,
                             fromAssetAmount: AssetAmount,
+                            limitProtection : Bool = true,
                             completionHandler: @escaping ( (TxParams, SwapCalculations)? ) -> () ) {
         
         guard fromAsset != toAsset else {
@@ -192,7 +194,8 @@ public class Thorchain {
                                                             assetDepthFirstSwap: poolAssets,
                                                             assetDepthSecondSwap: nil)
                     
-                    let swapMemo = Thorchain.getSwapMemo(asset: toAsset, destinationAddress: destinationAddress, limit: BaseAmount(output.amount / 10 * 9))  // * 0.9 protection limit
+                    let memoLimit : BaseAmount? = limitProtection ? BaseAmount(output.amount / 10 * 9) : nil // * 0.9 protection limit
+                    let swapMemo = Thorchain.getSwapMemo(asset: toAsset, destinationAddress: destinationAddress, limit: memoLimit)
                     
                     self.debugLog("Thorchain: Successfully calculated Swap parameters\n")
                     self.debugLog("Swapping \(fromAssetAmount.amount.truncate(8)) \(fromAsset.ticker) to \(toAsset.ticker)")
@@ -298,7 +301,8 @@ public class Thorchain {
                                                             assetDepthFirstSwap: fromPoolData,
                                                             assetDepthSecondSwap: toPoolData)
                     
-                    let swapMemo = Thorchain.getSwapMemo(asset: toAsset, destinationAddress: destinationAddress, limit: BaseAmount(output.amount / 10 * 9))  // * 0.9 protection limit
+                    let memoLimit : BaseAmount? = limitProtection ? BaseAmount(output.amount / 10 * 9) : nil // * 0.9 protection limit
+                    let swapMemo = Thorchain.getSwapMemo(asset: toAsset, destinationAddress: destinationAddress, limit: memoLimit)
 
                     self.debugLog("Thorchain: Successfully calculated Swap parameters\n")
                     self.debugLog("Swapping \(fromAssetAmount.amount.truncate(8)) \(fromAsset.ticker) to \(toAsset.ticker)")
