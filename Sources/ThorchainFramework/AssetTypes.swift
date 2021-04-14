@@ -100,7 +100,7 @@ public struct BaseAmount : ExpressibleByIntegerLiteral, ExpressibleByStringLiter
 }
 
 /// Holds a floating point asset amount, eg. 1.35 RUNE
-public struct AssetAmount : ExpressibleByFloatLiteral {
+public struct AssetAmount {
     public let amount : Decimal  // Foundation type. Good for ~38 decimal digits
     public let decimals: Int
     
@@ -124,15 +124,25 @@ public struct AssetAmount : ExpressibleByFloatLiteral {
         self.decimals = decimal
     }
     
-    
+    public static let defaultDecimal = 8
+}
+
+extension AssetAmount : ExpressibleByFloatLiteral {
     /// Initialise asset amount from a float literal, e.g. 1.0.  Creates with decimals = 8 (default Thorchain internal implementation amount)
     /// - Parameter floatLiteral: Amount of Asset
     public init(floatLiteral: Double) {
         self.amount = Decimal(floatLiteral)
         self.decimals = Self.defaultDecimal
     }
-    
-    public static let defaultDecimal = 8
+}
+
+extension AssetAmount : ExpressibleByIntegerLiteral {
+    /// Initialise asset amount from an int literal, e.g. 2  Creates with decimals = 8 (default Thorchain internal implementation amount)
+    /// - Parameter floatLiteral: Amount of Asset
+    public init(integerLiteral: Int) {
+        self.amount = Decimal(integerLiteral)
+        self.decimals = Self.defaultDecimal
+    }
 }
 
 extension Decimal {
