@@ -59,6 +59,9 @@ thorchain.performSwap(fromAsset: .ETH,
             print(routedTxData.assetAddress)
             print(routedTxData.amount)
             print(routedTxData.memo)
+        case .runeNativeDeposit(let runeNativeDeposit):
+            print(runeNativeDeposit.memo)
+            print(runeNativeDeposit.amount)
         }
     }
 }

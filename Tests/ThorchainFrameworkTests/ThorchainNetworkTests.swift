@@ -7,16 +7,48 @@ final class ThorchainNetworkTests: XCTestCase {
     // Used by all tests
     let thorchain = Thorchain(withChain: .mainnet)
 
-    func testSwapWithNetworking() {
+    func testSingleSwapRuneToAssetWithNetworking() {
         
         // Create an expectation for a background download task.
         let expectation = XCTestExpectation(description: "Midgard swap request")
 
-        // Thorchain object on testnet
-        thorchain.performSwap(fromAsset: .ETH,
-                              toAsset: .BTC,
-                              destinationAddress: "tthor1nr5fx23rvskt4uasdv49s2uhu0kyh73mdzy095",
-                              fromAssetAmount: 0.1) { (swapData) in
+        thorchain.performSwap(fromAsset: .RuneNative,
+                              toAsset: .BNB,
+                              destinationAddress: "tbnb1t3wgptcyp4gyw645w4fh5hpg45wllt2u9q8ns7",
+                              fromAssetAmount: 2) { (swapData) in
+            
+            XCTAssertNotNil(swapData, "No vault data was downloaded.")
+            
+            if let txParams = swapData?.0, let swapCalculations = swapData?.1 {
+                // Success
+                print(swapCalculations)
+                print(txParams)
+                
+                XCTAssert(swapCalculations.slip > 0)
+                
+                switch txParams {
+                case .runeNativeDeposit(let runeNativeDeposit):
+                    // Or BOND / UNBOND / LEAVE (Node admin typically not supported by 3rd party wallets integrating this framework)
+                    XCTAssert(runeNativeDeposit.memo.hasPrefix("SWAP:"))
+                default:
+                    XCTFail() // Should not get here on this test
+                }
+            }
+            expectation.fulfill()
+        }
+        
+        // Wait until the expectation is fulfilled, with a timeout of 12 seconds.
+        wait(for: [expectation], timeout: 12.0)
+    }
+    
+    func testSingleSwapRegularAssetToRuneWithNetworking() {
+        
+        let expectation = XCTestExpectation(description: "Midgard swap request")
+
+        thorchain.performSwap(fromAsset: .BTC,
+                              toAsset: .RuneNative,
+                              destinationAddress: "tthor10xgrknu44d83qr4s4uw56cqxg0hsev5e68lc9z",
+                              fromAssetAmount: 0.01) { (swapData) in
             
             XCTAssertNotNil(swapData, "No vault data was downloaded.")
             
@@ -31,6 +63,35 @@ final class ThorchainNetworkTests: XCTestCase {
                 case .regularSwap(let regularTxData):
                     print(regularTxData)
                     XCTAssert(regularTxData.memo.hasPrefix("SWAP:"))
+                default:
+                    XCTFail() // Should not get here on this test
+                }
+            }
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 12.0)
+    }
+    
+    func testSingleSwapRoutedAssetToRuneWithNetworking() {
+        
+        // Create an expectation for a background download task.
+        let expectation = XCTestExpectation(description: "Midgard swap request")
+
+        thorchain.performSwap(fromAsset: .ETH,
+                              toAsset: .RuneNative,
+                              destinationAddress: "tthor10xgrknu44d83qr4s4uw56cqxg0hsev5e68lc9z",
+                              fromAssetAmount: 0.1) { (swapData) in
+            
+            XCTAssertNotNil(swapData, "No vault data was downloaded.")
+            
+            if let txParams = swapData?.0, let swapCalculations = swapData?.1 {
+                // Success
+                print(swapCalculations)
+                print(txParams)
+                
+                XCTAssert(swapCalculations.slip > 0)
+                
+                switch txParams {
                 case .routedSwap(let routedTxData):
                     print(routedTxData)
                     if self.thorchain.chain == .testnet {
@@ -41,13 +102,44 @@ final class ThorchainNetworkTests: XCTestCase {
                     }
                     XCTAssert(routedTxData.assetAddress == "0x0000000000000000000000000000000000000000")
                     XCTAssert(routedTxData.memo.hasPrefix("SWAP:"))
+                default:
+                    XCTFail() // Should not get here on this test
                 }
             }
-            
             expectation.fulfill()
         }
+        wait(for: [expectation], timeout: 12.0)
+    }
+    
+    func testDoubleSwapWithNetworking() {
         
-        // Wait until the expectation is fulfilled, with a timeout of 12 seconds.
+        // Create an expectation for a background download task.
+        let expectation = XCTestExpectation(description: "Midgard swap request")
+
+        thorchain.performSwap(fromAsset: .BNB,
+                              toAsset: .LTC,
+                              destinationAddress: "tltc1qjupykwt6fvcrrn8z44m8edlc2d6qq0ytw85ydh",
+                              fromAssetAmount: 1) { (swapData) in
+            
+            XCTAssertNotNil(swapData, "No vault data was downloaded.")
+            
+            if let txParams = swapData?.0, let swapCalculations = swapData?.1 {
+                // Success
+                print(swapCalculations)
+                print(txParams)
+                
+                XCTAssert(swapCalculations.slip > 0)
+                
+                switch txParams {
+                case .regularSwap(let regularTxData):
+                    print(regularTxData)
+                    XCTAssert(regularTxData.memo.hasPrefix("SWAP:"))
+                default:
+                    XCTFail() // Should not get here on this test
+                }
+            }
+            expectation.fulfill()
+        }
         wait(for: [expectation], timeout: 12.0)
     }
     

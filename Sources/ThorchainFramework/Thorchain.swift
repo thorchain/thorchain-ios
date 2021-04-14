@@ -119,16 +119,17 @@ public class Thorchain {
             assert(Thread.current.isMainThread)
             
             // Unwrap result & filter out any chains with status showing 'halted : true'.
-            guard let inboundAddresses = inboundAddresses?.filter({ $0.halted ?? false == false }), inboundAddresses.count > 0 else {
+            guard var inboundAddresses = inboundAddresses?.filter({ $0.halted ?? false == false }), inboundAddresses.count > 0 else {
                 self.debugLog("Thorchain: No inbound addresses found. Probably network error.")
                 completionHandler(nil)
                 return // Error: No vault. Probably a network error.
             }
             
+            // Artificially add THOR.RUNE into InboundAddresses because this is always supported via Deposit() into the network. Logic on dealing with this added later.
+            inboundAddresses.append(Midgard.InboundAddress(chain: Asset.RuneNative.chain, pub_key: "", address: "", router: nil, halted: false, gas_rate: ""))
+            
             self.debugLog("Thorchain: Successfully fetched current inbound addresses")
             
-            // TODO: THOR.RUNE > Asset won't find any inbound addresses below because it is done via MsgDeposit. Requires implementing extra logic.
-            assert(fromAsset != .RuneNative)
             
             // Get the best Asgard Vault asset address at the last possible time before doing the transaction. An address is good for 15 minutes, but do not cache at all.
             // If a recipient address is cached and funds sent to an old (retired) asgard vault, the funds are lost.
@@ -231,14 +232,28 @@ public class Thorchain {
                         completionHandler((txParams, swapCalculations))  // Success
                    
                     } else {
-                        let transactionDetails = TxParams.RegularTransaction(recipient: inboundAddress.address, amount: fromAssetAmount, memo: swapMemo)
-                        
-                        self.debugLog("Recipient: \(transactionDetails.recipient ?? "Recipient address too old")  (do not save/cache for later)")
-                        self.debugLog("Amount: \(transactionDetails.amount.amount.truncate(8)) \(fromAsset.ticker)")
-                        self.debugLog("Transaction Memo: \(transactionDetails.memo)")
-                        
-                        let txParams = Thorchain.TxParams.regularSwap(transactionDetails)
-                        completionHandler((txParams, swapCalculations))
+                        if fromAsset == .RuneNative {
+                            // RUNE >> Asset
+                            let nativeDeposit = TxParams.RuneDepositTransaction(memo: swapMemo, amount: fromAssetAmount)
+                            
+                            self.debugLog("Thorchain MsgDeposit() details")
+                            self.debugLog("Memo: \(nativeDeposit.memo)")
+                            self.debugLog("Amount: \(nativeDeposit.amount.amount.truncate(8)) RUNE")
+                            
+                            let txParams = Thorchain.TxParams.runeNativeDeposit(nativeDeposit)
+                            completionHandler((txParams, swapCalculations))
+                            
+                        } else {
+                            // Asset >> RUNE
+                            let transactionDetails = TxParams.RegularTransaction(recipient: inboundAddress.address, amount: fromAssetAmount, memo: swapMemo)
+                            
+                            self.debugLog("Recipient: \(transactionDetails.recipient ?? "Recipient address too old")  (do not save/cache for later)")
+                            self.debugLog("Amount: \(transactionDetails.amount.amount.truncate(8)) \(fromAsset.ticker)")
+                            self.debugLog("Transaction Memo: \(transactionDetails.memo)")
+                            
+                            let txParams = Thorchain.TxParams.regularSwap(transactionDetails)
+                            completionHandler((txParams, swapCalculations))
+                        }
                     }
                     
                 } else {
@@ -364,6 +379,7 @@ extension Thorchain {
     public enum TxParams {
         case regularSwap(RegularTransaction)
         case routedSwap(RoutedTransaction)
+        case runeNativeDeposit(RuneDepositTransaction)
     
         public struct RegularTransaction {
             /// Transaction details. Represents all the information a client needs to perform their transaction into the Thorchain network.
@@ -413,6 +429,17 @@ extension Thorchain {
             public let amount : AssetAmount
             public let memo : String
             private let txCreationDate = Date()
+        }
+        
+        /// Transaction type representing a RuneNative Deposit() call into the Thorchain network with AssetAmount and Memo.
+        /// Used for THOR.RUNE > Other swaps, and Bond / Unbond
+        public struct RuneDepositTransaction {
+            public init(memo: String, amount: AssetAmount) {
+                self.memo = memo
+                self.amount = amount
+            }
+            public let amount : AssetAmount
+            public let memo : String
         }
     }
     
