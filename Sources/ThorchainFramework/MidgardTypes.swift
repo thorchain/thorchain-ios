@@ -906,11 +906,21 @@ extension Midgard {
                     public let reason : String
                 }
                 
-                /// One of these four is present 
+                public struct DonateMetadata : Decodable {
+                    // TODO awaiting https://midgard.thorchain.info/v2/doc#operation/GetActions
+                }
+                
+                public struct SwitchMetadata : Decodable {
+                    // TODO awaiting https://midgard.thorchain.info/v2/doc#operation/GetActions
+                }
+                
+                /// One of these six is present
                 public let swap : SwapMetadata?
                 public let addLiquidity : AddLiquidityMetadata?
                 public let withdraw : WithdrawMetadata?
                 public let refund : RefundMetadata?
+                public let donate : DonateMetadata?
+                public let `switch` : SwitchMetadata?
             }
             
             /// Pools involved in the action

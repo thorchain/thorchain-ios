@@ -36,10 +36,12 @@ extension Thorchain {
                 completionHandler(nil)
                 return
             }
-            if let pools : MidgardType = try? self.jsonDecoder.decode(MidgardType.self, from: data) {
+            do {
+                let pools : MidgardType = try self.jsonDecoder.decode(MidgardType.self, from: data)
                 completionHandler(pools) //Success
-            } else {
-                self.debugLog("Thorchain Error: Could not decode Midgard JSON")
+            }
+            catch {
+                self.debugLog("Thorchain Exception Decoding Midgard API:\n\(error)")
                 completionHandler(nil)
             }
         }
