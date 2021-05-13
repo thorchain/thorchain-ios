@@ -46,7 +46,7 @@ extension Midgard {
         public let router : String?
         
         /// If set and true, indicates we should NOT use this chain.
-        public let halted : Bool?
+        public let halted : Bool
         
         /// Estimate of gas rates to use for client transactions. Sats per byte or Gwei depending on chain.
         public let gas_rate : String

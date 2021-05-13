@@ -121,7 +121,7 @@ public class Thorchain {
             assert(Thread.current.isMainThread)
             
             // Unwrap result & filter out any chains with status showing 'halted : true'.
-            guard var inboundAddresses = inboundAddresses?.filter({ $0.halted ?? false == false }), inboundAddresses.count > 0 else {
+            guard var inboundAddresses = inboundAddresses?.filter({ $0.halted == false }), inboundAddresses.count > 0 else {
                 self.debugLog("Thorchain: No inbound addresses found. Probably network error.")
                 completionHandler(nil)
                 return // Error: No vault. Probably a network error.

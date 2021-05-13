@@ -413,7 +413,7 @@ extension Thorchain {
                             return
                         }
                         if let activeInboundAddresses : [Midgard.InboundAddress] = try? self.jsonDecoder.decode([Midgard.InboundAddress].self, from: data)
-                            .filter({ $0.halted ?? false == false }) {
+                            .filter({ $0.halted == false }) {
                             
                             validResponses.append(activeInboundAddresses)
                         }
