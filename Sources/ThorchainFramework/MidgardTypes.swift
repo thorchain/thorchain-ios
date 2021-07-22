@@ -813,7 +813,7 @@ extension Midgard {
         public struct Action : Decodable {
             /// Type of Action
             public enum ActionType : String, Decodable {
-                case swap, addLiquidity, withdraw, donate, refund
+                case swap, addLiquidity, withdraw, donate, refund, `switch`
             }
             public enum ActionStatus : String, Decodable {
                 case success, pending
@@ -887,6 +887,9 @@ extension Midgard {
                     
                     /// List of network fees associated to an action. One network fee is charged for each outbound transaction
                     public let networkFees : [NetworkFee]
+                    
+                    /// Additional Rune payed out because of impermanent loss protection (Int64 as String)
+                    public let impermanentLossProtection : String
                 }
                 
                 public struct RefundMetadata : Decodable {
@@ -906,21 +909,11 @@ extension Midgard {
                     public let reason : String
                 }
                 
-                public struct DonateMetadata : Decodable {
-                    // TODO awaiting https://midgard.thorchain.info/v2/doc#operation/GetActions
-                }
-                
-                public struct SwitchMetadata : Decodable {
-                    // TODO awaiting https://midgard.thorchain.info/v2/doc#operation/GetActions
-                }
-                
-                /// One of these six is present
+                /// One of these may be present
                 public let swap : SwapMetadata?
                 public let addLiquidity : AddLiquidityMetadata?
                 public let withdraw : WithdrawMetadata?
                 public let refund : RefundMetadata?
-                public let donate : DonateMetadata?
-                public let `switch` : SwitchMetadata?
             }
             
             /// Pools involved in the action
