@@ -98,7 +98,7 @@ final class ThorchainNetworkTests: XCTestCase {
                         XCTAssert(routedTxData.routerContractAddress.lowercased() == "0xe0a63488e677151844e70623533c22007dc57c9e")
                     }
                     if self.thorchain.chain == .mainnet {
-                        XCTAssert(routedTxData.routerContractAddress.lowercased() == "0x42a5ed456650a09dc10ebc6361a7480fdd61f27b")
+                        XCTAssert(routedTxData.routerContractAddress.lowercased() == "0xc145990e84155416144c532e31f89b840ca8c2ce")
                     }
                     XCTAssert(routedTxData.assetAddress == "0x0000000000000000000000000000000000000000")
                     XCTAssert(routedTxData.memo.hasPrefix("SWAP:"))
